@@ -62,7 +62,7 @@ const Footer = () => {
           <div className="col-lg-3">
             <Image src={logoWhite} alt="logo" height={24} />
             <p className="mt-3 fs-sm">
-              UBold is a best-selling admin dashboard template on ThemeForest, recognized for its clean design, versatility, and robust features. Create modern, responsive web applications effortlessly with this top-tier solution!
+              Intraspace is a modern, responsive admin dashboard. Ideal for building CRM, CMS, project management tools, and custom web applications with a clean UI, flexible layouts, and rich features.
             </p>
             <div className="d-flex gap-2 mt-4 mb-2">
               {socialLinks.map(({ icon: Icon, title, url }, idx) => (
@@ -94,7 +94,7 @@ const Footer = () => {
         </Row>
         <Row className="mt-5">
           <Col xs={12} className="text-center">
-            <p className="mb-4">© {currentYear} UBold By <span className="fw-semibold">Coderthemes</span> </p>
+            <p className="mb-4">© {currentYear} Intraspace By <span className="fw-semibold">Coderthemes</span> </p>
           </Col>
         </Row>
 

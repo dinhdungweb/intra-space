@@ -19,7 +19,7 @@ const Hero = () => {
             </p>
             <div className="d-flex gap-1 gap-sm-2 flex-wrap justify-content-center">
               <Button variant="primary" className="py-2 fw-semibold" href="#">
-                <TbBasket className="fs-xl me-2" />Buy UBold Now!
+                <TbBasket className="fs-xl me-2" />Get Intraspace Now!
               </Button>
             </div>
           </Col>
