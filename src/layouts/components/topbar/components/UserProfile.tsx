@@ -1,4 +1,7 @@
+'use client'
+
 import { userDropdownItems } from '@/layouts/components/data'
+import { signOut, useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Fragment } from 'react'
@@ -8,13 +11,19 @@ import { TbChevronDown } from 'react-icons/tb'
 import user3 from '@/assets/images/users/user-3.jpg'
 
 const UserProfile = () => {
+  const { data: session } = useSession()
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/login' })
+  }
+
   return (
     <div className="topbar-item nav-user">
       <Dropdown align="end">
         <DropdownToggle as={'a'} className="topbar-link dropdown-toggle drop-arrow-none px-2">
           <Image src={user3.src} width="32" height="32" className="rounded-circle me-lg-2 d-flex" alt="user-image" />
           <div className="d-lg-flex align-items-center gap-1 d-none">
-            <h5 className="my-0">Geneva</h5>
+            <h5 className="my-0">{session?.user?.name || 'User'}</h5>
             <TbChevronDown className="align-middle" />
           </div>
         </DropdownToggle>
@@ -27,6 +36,11 @@ const UserProfile = () => {
                 </div>
               ) : item.isDivider ? (
                 <DropdownDivider />
+              ) : item.label === 'Logout' ? (
+                <DropdownItem onClick={handleLogout} className={item.class}>
+                  {item.icon && <item.icon className="me-2 fs-17 align-middle" />}
+                  <span className="align-middle">{item.label}</span>
+                </DropdownItem>
               ) : (
                 <DropdownItem as={Link} href={item.url} className={item.class}>
                   {item.icon && <item.icon className="me-2 fs-17 align-middle" />}

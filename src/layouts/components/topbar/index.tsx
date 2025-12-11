@@ -12,9 +12,7 @@ import { Container, FormControl } from 'react-bootstrap'
 import { LuSearch } from 'react-icons/lu'
 import { TbMenu4 } from 'react-icons/tb'
 
-import logoDark from '@/assets/images/logo-black.png'
-import logoSm from '@/assets/images/logo-sm.png'
-import logo from '@/assets/images/logo.png'
+import { LogoFull, LogoIcon } from '@/components/IntraspaceLogo'
 import ApplicationMenu from '@/layouts/components/topbar/components/ApplicationMenu'
 import FullscreenToggle from '@/layouts/components/topbar/components/FullscreenToggle'
 import MonochromeThemeModeToggler from '@/layouts/components/topbar/components/MonochromeThemeModeToggler'
@@ -29,10 +27,10 @@ const Topbar = () => {
     if (currentSize === 'offcanvas') {
       html.classList.toggle('sidebar-enable')
       showBackdrop()
-    } else if (sidenavSize=== 'compact') {
-      updateSettings({sidenavSize:currentSize === 'compact' ? 'condensed' : 'compact'})
+    } else if (sidenavSize === 'compact') {
+      updateSettings({ sidenavSize: currentSize === 'compact' ? 'condensed' : 'compact' })
     } else {
-      updateSettings({sidenavSize:currentSize === 'condensed' ? 'default' : 'condensed'})
+      updateSettings({ sidenavSize: currentSize === 'condensed' ? 'default' : 'condensed' })
     }
   }
 
@@ -43,19 +41,23 @@ const Topbar = () => {
           <div className="logo-topbar">
             <Link href="/" className="logo-light">
               <span className="logo-lg">
-                <Image src={logo.src} alt="logo" width={94.3} height={22} />
+                <LogoFull mode="dark" iconSize={32} height={70} />
               </span>
               <span className="logo-sm">
-                <Image src={logoSm.src} alt="small logo" width={30.55} height={26} />
+                <div className="d-flex align-items-center justify-content-center" style={{ height: '70px' }}>
+                  <LogoIcon size={32} className="text-white" />
+                </div>
               </span>
             </Link>
 
             <Link href="/" className="logo-dark">
               <span className="logo-lg">
-                <Image src={logoDark.src} alt="dark logo" width={94.3} height={22} />
+                <LogoFull mode="light" iconSize={32} height={70} />
               </span>
               <span className="logo-sm">
-                <Image src={logoSm.src} alt="small logo" width={30.55} height={26} />
+                <div className="d-flex align-items-center justify-content-center" style={{ height: '70px' }}>
+                  <LogoIcon size={32} className="text-primary" />
+                </div>
               </span>
             </Link>
           </div>

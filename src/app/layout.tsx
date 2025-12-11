@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import AppWrapper from '@/components/AppWrapper'
+import AuthProvider from '@/components/AuthProvider'
 
 import favicon from '@/assets/images/favicon.ico'
 import { appDescription, appTitle } from '@/helpers'
@@ -44,7 +45,9 @@ const RootLayout = ({ children }: ChildrenType) => {
     return (
         <html lang="en" className={`${beVietnamPro.variable} ${nunito.variable} ${publicSans.variable} ${poppins.variable} ${roboto.variable} ${inter.variable} ${ibmPlexSans.variable}`}>
             <body>
-                <AppWrapper>{children}</AppWrapper>
+                <AuthProvider>
+                    <AppWrapper>{children}</AppWrapper>
+                </AuthProvider>
             </body>
         </html>
     )

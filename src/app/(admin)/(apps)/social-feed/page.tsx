@@ -1,7 +1,7 @@
 import PageBreadcrumb from '@/components/PageBreadcrumb'
 import { Col, Row } from 'react-bootstrap'
 import SocialProfile from '@/app/(admin)/(apps)/social-feed/components/SocialProfile'
-import Feeds from '@/app/(admin)/(apps)/social-feed/components/Feeds'
+import Feeds from '@/app/(admin)/(apps)/social-feed/components/FeedsNew'
 import Activity from '@/app/(admin)/(apps)/social-feed/components/Activity'
 import Trending from '@/app/(admin)/(apps)/social-feed/components/Trending'
 import Requests from '@/app/(admin)/(apps)/social-feed/components/Requests'

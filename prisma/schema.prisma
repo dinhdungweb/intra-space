@@ -1,0 +1,260 @@
+// Prisma schema for Intraspace Enterprise Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Core User Management
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  password      String
+  avatar        String?
+  bio           String?
+  phone         String?
+  location      String?
+  role          UserRole  @default(USER)
+  departmentId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  department    Department?  @relation(fields: [departmentId], references: [id])
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  tasks         Task[]       @relation("AssignedTasks")
+  createdTasks  Task[]       @relation("CreatedTasks")
+  leaveRequests LeaveRequest[]
+  attendance    Attendance[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
+}
+
+// ============================================
+// Organization Structure
+// ============================================
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+
+  @@map("departments")
+}
+
+// ============================================
+// Social Feed
+// ============================================
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  media     String[] // Array of media URLs
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     Like[]
+
+  @@map("posts")
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  parentId  String?  // For nested replies
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+  @@index([postId])
+  @@index([userId])
+}
+
+// ============================================
+// Task & Project Management
+// ============================================
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tasks       Task[]
+
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  projectId   String?
+  assigneeId  String?
+  createdById String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  project     Project?   @relation(fields: [projectId], references: [id])
+  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdBy   User       @relation("CreatedTasks", fields: [createdById], references: [id])
+
+  @@map("tasks")
+  @@index([assigneeId])
+  @@index([status])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ============================================
+// HR & Leave Management
+// ============================================
+
+model LeaveRequest {
+  id          String      @id @default(uuid())
+  userId      String
+  type        LeaveType
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  status      LeaveStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("leave_requests")
+  @@index([userId])
+  @@index([status])
+}
+
+enum LeaveType {
+  VACATION
+  SICK
+  PERSONAL
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Attendance {
+  id         String   @id @default(uuid())
+  userId     String
+  checkIn    DateTime
+  checkOut   DateTime?
+  date       DateTime
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("attendance")
+  @@index([userId])
+  @@index([date])
+}
+
+// ============================================
+// Organization Settings
+// ============================================
+
+model OrganizationSettings {
+  id            String   @id @default(uuid())
+  companyName   String
+  companyEmail  String
+  companyPhone  String?
+  companyAddress String?
+  logo          String?
+  primaryColor  String   @default("#6658dd")
+  secondaryColor String  @default("#4a81d4")
+  timezone      String   @default("Asia/Ho_Chi_Minh")
+  language      String   @default("vi")
+  dateFormat    String   @default("DD/MM/YYYY")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("organization_settings")
+}

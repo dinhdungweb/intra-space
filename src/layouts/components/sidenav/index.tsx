@@ -1,7 +1,5 @@
 'use client'
-import logoDark from '@/assets/images/logo-black.png'
-import logoSm from '@/assets/images/logo-sm.png'
-import logo from '@/assets/images/logo.png'
+import { LogoFull, LogoIcon } from '@/components/IntraspaceLogo'
 import SimplebarClient from '@/components/client-wrapper/SimplebarClient'
 import { useLayoutContext } from '@/context/useLayoutContext'
 import AppMenu from '@/layouts/components/sidenav/components/AppMenu'
@@ -11,7 +9,7 @@ import Link from 'next/link'
 import { TbMenu4, TbX } from 'react-icons/tb'
 
 const Sidenav = () => {
-  const { hideBackdrop, updateSettings, sidenavSize ,sidenavUser} = useLayoutContext()
+  const { hideBackdrop, updateSettings, sidenavSize, sidenavUser } = useLayoutContext()
 
   const toggleSidebar = () => {
     updateSettings({ sidenavSize: sidenavSize === 'on-hover-active' ? 'on-hover' : 'on-hover-active' })
@@ -25,22 +23,26 @@ const Sidenav = () => {
 
   return (
     <div className="sidenav-menu">
-      <Link href="/" className="logo">
+      <Link href="/" className="logo d-flex align-items-center justify-content-center" style={{ height: '70px' }}>
         <span className="logo logo-light">
           <span className="logo-lg">
-            <Image src={logo} alt="logo" width={94} height={22} />
+            <LogoFull mode="dark" iconSize={24} height={70} />
           </span>
           <span className="logo-sm">
-            <Image src={logoSm} alt="small logo" width={20} height={22} />
+            <div className="d-flex align-items-center justify-content-center" style={{ height: '70px' }}>
+              <LogoIcon size={24} className="text-white" />
+            </div>
           </span>
         </span>
 
         <span className="logo logo-dark">
           <span className="logo-lg">
-            <Image src={logoDark} alt="dark logo" width={94} height={22} />
+            <LogoFull mode="light" iconSize={24} height={70} />
           </span>
           <span className="logo-sm">
-            <Image src={logoSm} alt="small logo" width={20} height={22} />
+            <div className="d-flex align-items-center justify-content-center" style={{ height: '70px' }}>
+              <LogoIcon size={24} className="text-primary" />
+            </div>
           </span>
         </span>
       </Link>

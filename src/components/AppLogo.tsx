@@ -1,20 +1,18 @@
-import Image from 'next/image'
 import Link from 'next/link'
-
-import logoDark from '@/assets/images/intraspace-logo.png'
-import logo from '@/assets/images/intraspace-logo.png'
+import { LogoFull } from './IntraspaceLogo'
 
 const AppLogo = ({ height }: { height?: number }) => {
   return (
     <>
       <Link href="/" className="logo-dark">
-        <Image src={logoDark} alt="dark logo" height={height ?? 40} />
+        <LogoFull mode="light" iconSize={32} textSize="24px" height={height} />
       </Link>
       <Link href="/" className="logo-light">
-        <Image src={logo} alt="logo" height={height ?? 40} />
+        <LogoFull mode="dark" iconSize={32} textSize="24px" height={height} />
       </Link>
     </>
   )
 }
 
 export default AppLogo
+

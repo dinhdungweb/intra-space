@@ -68,7 +68,7 @@ export const userDropdownItems: UserDropdownItemType[] = [
   {
     label: 'Profile',
     icon: TbUserCircle,
-    url: '/users/profile',
+    url: '/profile',
   },
   {
     label: 'Notifications',
@@ -83,7 +83,7 @@ export const userDropdownItems: UserDropdownItemType[] = [
   {
     label: 'Account Settings',
     icon: TbSettings2,
-    url: '#',
+    url: '/settings',
   },
   {
     label: 'Support Center',
@@ -99,7 +99,7 @@ export const userDropdownItems: UserDropdownItemType[] = [
     url: '/auth-1/lock-screen',
   },
   {
-    label: 'Log Out',
+    label: 'Logout',
     icon: TbLogout2,
     url: '#',
     class: 'text-danger fw-semibold',

@@ -94,7 +94,7 @@ const Footer = () => {
         </Row>
         <Row className="mt-5">
           <Col xs={12} className="text-center">
-            <p className="mb-4">© {currentYear} Intraspace By <span className="fw-semibold">Coderthemes</span> </p>
+            <p className="mb-4">© {currentYear} Intraspace </p>
           </Col>
         </Row>
 
