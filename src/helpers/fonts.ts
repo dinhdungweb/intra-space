@@ -1,7 +1,15 @@
-import { IBM_Plex_Sans, Inter, Nunito, Poppins, Public_Sans, Roboto } from 'next/font/google'
+import { Be_Vietnam_Pro, IBM_Plex_Sans, Inter, Nunito, Poppins, Public_Sans, Roboto } from 'next/font/google'
+
+export const beVietnamPro = Be_Vietnam_Pro({
+  variable: '--ins-font-sans-serif',
+  subsets: ['latin', 'vietnamese'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+})
 
 export const inter = Inter({
-  variable: '--ins-font-sans-serif',
+  variable: '--font-inter',
   subsets: ['latin'],
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   style: ['normal', 'italic'],
@@ -25,23 +33,23 @@ export const nunito = Nunito({
 })
 
 export const roboto = Roboto({
-  variable: '--ins-font-sans-serif',
+  variable: '--font-roboto',
   subsets: ['latin'],
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  weight: ['100', '300', '400', '500', '700', '900'],
   style: ['normal', 'italic'],
   display: 'swap',
 })
 
 export const ibmPlexSans = IBM_Plex_Sans({
-  variable: '--ins-font-sans-serif',
-  subsets: ['latin','greek','cyrillic-ext','cyrillic','vietnamese','latin-ext'],
+  variable: '--font-ibm-plex-sans',
+  subsets: ['latin', 'greek', 'cyrillic-ext', 'cyrillic', 'vietnamese', 'latin-ext'],
   weight: ['100', '200', '300', '400', '500', '600', '700'],
   style: ['normal', 'italic'],
   display: 'swap',
 })
 
 export const poppins = Poppins({
-  variable: '--ins-font-sans-serif',
+  variable: '--font-poppins',
   subsets: ['latin'],
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   style: ['normal', 'italic'],

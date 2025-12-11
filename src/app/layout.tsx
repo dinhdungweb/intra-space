@@ -28,7 +28,7 @@ import 'simplebar-react/dist/simplebar.min.css'
 import 'sweetalert2/dist/sweetalert2.min.css'
 
 import '@/assets/scss/app.scss'
-import { ibmPlexSans, inter, nunito, poppins, publicSans, roboto } from '@/helpers/fonts'
+import { beVietnamPro, ibmPlexSans, inter, nunito, poppins, publicSans, roboto } from '@/helpers/fonts'
 
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 
 const RootLayout = ({ children }: ChildrenType) => {
     return (
-        <html lang="en" className={`${nunito.variable} ${publicSans.variable} ${poppins.variable} ${roboto.variable} ${inter.variable} ${ibmPlexSans.variable}`}>
+        <html lang="en" className={`${beVietnamPro.variable} ${nunito.variable} ${publicSans.variable} ${poppins.variable} ${roboto.variable} ${inter.variable} ${ibmPlexSans.variable}`}>
             <body>
                 <AppWrapper>{children}</AppWrapper>
             </body>
