@@ -58,7 +58,7 @@ const PasswordInputWithStrength = ({
           onChange={(e) => setPassword(e.target.value)}
         />
         {showIcon && (
-            <LuKeyRound className="app-search-icon text-muted" />
+          <LuKeyRound className="app-search-icon text-muted" />
         )}
       </div>
 
@@ -68,7 +68,7 @@ const PasswordInputWithStrength = ({
         ))}
       </div>
 
-      <p className="text-muted fs-xs mb-0">Use 8+ characters with letters, numbers & symbols.</p>
+      <p className="text-muted fs-xs mb-0">Sử dụng ít nhất 8 ký tự, bao gồm chữ cái, số và ký tự đặc biệt.</p>
     </>
   )
 }

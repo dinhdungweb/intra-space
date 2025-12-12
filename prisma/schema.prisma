@@ -258,3 +258,20 @@ model OrganizationSettings {
 
   @@map("organization_settings")
 }
+
+// ============================================
+// Password Reset Token
+// ============================================
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+  @@index([email])
+  @@index([token])
+}
+

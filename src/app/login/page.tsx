@@ -56,7 +56,7 @@ const Page = () => {
 
                             <div className="auth-brand text-center mb-4">
                                 <AppLogo />
-                                <p className="text-muted w-lg-75 mt-3 mx-auto">Let's get you signed in. Enter your email and password to continue.</p>
+                                <p className="text-muted w-lg-75 mt-3 mx-auto">Chào mừng bạn quay lại. Nhập email và mật khẩu để tiếp tục.</p>
                             </div>
 
                             {error && (
@@ -101,7 +101,7 @@ const Page = () => {
                                             Ghi nhớ đăng nhập
                                         </label>
                                     </div>
-                                    <Link href="/auth-1/reset-password" className="text-decoration-underline link-offset-3 text-muted">
+                                    <Link href="/forgot-password" className="text-decoration-underline link-offset-3 text-muted">
                                         Quên mật khẩu?
                                     </Link>
                                 </div>
@@ -114,9 +114,9 @@ const Page = () => {
                             </Form>
 
                             <p className="text-muted text-center mt-4 mb-0">
-                                New here?{' '}
-                                <Link href="/auth-1/sign-up" className="text-decoration-underline link-offset-3 fw-semibold">
-                                    Create an account
+                                Chưa có tài khoản?{' '}
+                                <Link href="/register" className="text-decoration-underline link-offset-3 fw-semibold">
+                                    Đăng ký ngay
                                 </Link>
                             </p>
                         </Card>

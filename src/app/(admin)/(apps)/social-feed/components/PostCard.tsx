@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'react-bootstrap'
+import { Card, CardBody, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Spinner } from 'react-bootstrap'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -15,8 +15,12 @@ import {
     TbShare,
     TbShare3,
     TbTrash,
+    TbCamera,
+    TbMoodSmile,
+    TbSend,
 } from 'react-icons/tb'
 import { PostType } from './FeedsNew'
+import MediaGallery from './MediaGallery'
 
 import defaultAvatar from '@/assets/images/users/user-1.jpg'
 
@@ -24,7 +28,7 @@ type PostCardProps = {
     post: PostType
     currentUserId?: string
     onLike: (postId: string) => void
-    onComment: (postId: string, content: string, parentId?: string) => void
+    onComment: (postId: string, content: string, parentId?: string) => Promise<void> | void
     onDelete: (postId: string) => void
 }
 
@@ -55,106 +59,172 @@ type ReplyItemProps = {
     parentAuthorName: string
 }
 
-const ReplyItem = ({ reply, parentCommentId, postId, onComment, formatTime, parentAuthorName }: ReplyItemProps) => {
-    const [showReplyForm, setShowReplyForm] = useState(false)
-    const [replyText, setReplyText] = useState('')
 
-    const handleReplySubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!replyText.trim()) return
-
-        // Reply to this reply (creates nested level 3 comment)
-        onComment(postId, replyText, reply.id)
-        setReplyText('')
-        setShowReplyForm(false)
-    }
-
+// Helper for rendering tree lines
+const TreeConnector = ({ isLast, isFirst, leftOffset = '-21px' }: { isLast: boolean, isFirst: boolean, leftOffset?: string }) => {
     return (
-        <div className="d-flex align-items-start py-1 position-relative">
-            {/* Vertical line for nested replies */}
-            {reply.replies && reply.replies.length > 0 && (
+        <>
+            {/* 1. Line from top to avatar anchor (curve start) */}
+            <div
+                style={{
+                    position: 'absolute',
+                    left: leftOffset, // Align with avatar center
+                    top: isFirst ? '-4px' : '0', // If first, go up a bit more to meet parent line
+                    height: isFirst ? '22px' : '18px', // Reach the curve point (approx 18px down)
+                    width: '2px',
+                    backgroundColor: '#ddd'
+                }}
+            />
+
+            {/* 2. The Curve */}
+            <div
+                style={{
+                    position: 'absolute',
+                    left: leftOffset,
+                    top: '10px', // Anchor point
+                    width: '16px',
+                    height: '12px',
+                    borderLeft: '2px solid #ddd',
+                    borderBottom: '2px solid #ddd',
+                    borderBottomLeftRadius: '8px'
+                }}
+            />
+
+            {/* 3. Line to next sibling (only if not last) */}
+            {!isLast && (
                 <div
                     style={{
                         position: 'absolute',
-                        left: '11px',
-                        top: '34px',
-                        bottom: '100px',
+                        left: leftOffset,
+                        top: '18px', // Start after the curve anchor
+                        bottom: '0', // Go all the way down to connect to next sibling
                         width: '2px',
                         backgroundColor: '#ddd'
                     }}
                 />
             )}
-            <Image
-                src={reply.author.avatar || defaultAvatar.src}
-                className="me-2 avatar-xs rounded-circle flex-shrink-0"
-                width={24}
-                height={24}
-                alt={reply.author.name}
-                style={{ position: 'relative', zIndex: 1 }}
-            />
-            <div className="w-100">
-                {/* Reply bubble */}
-                <div className="bg-light rounded-3 px-3 py-2" style={{ display: 'inline-block', maxWidth: '100%' }}>
-                    <Link href="/users/profile" className="link-reset fw-semibold fs-13">
-                        {reply.author.name}
-                    </Link>
-                    <p className="mb-0 mt-1 fs-13" style={{ whiteSpace: 'pre-wrap' }}>{reply.content}</p>
-                </div>
+        </>
+    )
+}
 
-                {/* Action row */}
-                <div className="d-flex align-items-center gap-3 mt-1 ps-2">
-                    <small className="text-muted fs-12">{formatTime(reply.createdAt)}</small>
-                    <span className="text-muted fs-12 fw-medium" style={{ cursor: 'pointer' }}>Thích</span>
-                    <span
-                        className="text-muted fs-12 fw-medium"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => setShowReplyForm(!showReplyForm)}
-                    >
-                        Trả lời
-                    </span>
-                </div>
+const ReplyItem = ({ reply, parentCommentId, postId, onComment, formatTime, parentAuthorName }: ReplyItemProps) => {
+    const [showReplyForm, setShowReplyForm] = useState(false)
+    const [replyText, setReplyText] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-                {/* Reply form for this reply */}
-                {showReplyForm && (
-                    <form onSubmit={handleReplySubmit} className="d-flex align-items-center mt-2">
-                        <Image
-                            src={defaultAvatar}
-                            className="me-2 avatar-xs rounded-circle flex-shrink-0"
-                            width={20}
-                            height={20}
-                            alt="user"
-                        />
-                        <div className="w-100">
-                            <input
-                                type="text"
-                                className="form-control form-control-sm rounded-pill"
-                                placeholder={`Trả lời ${reply.author.name}...`}
-                                value={replyText}
-                                onChange={(e) => setReplyText(e.target.value)}
-                                autoFocus
-                            />
-                        </div>
-                    </form>
-                )}
+    const handleReplySubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!replyText.trim() || isSubmitting) return
 
-                {/* Nested replies (level 3) */}
+        setIsSubmitting(true)
+        try {
+            await onComment(postId, replyText, reply.id)
+            setReplyText('')
+            setShowReplyForm(false)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    return (
+        <div className="position-relative">
+            <div className="d-flex align-items-start py-1 position-relative">
+                {/* Bridge Line - connects Avatar to bottom of content area (start of nested replies) */}
                 {reply.replies && reply.replies.length > 0 && (
-                    <div>
-                        {reply.replies.map((nestedReply) => (
-                            <div key={nestedReply.id} className="position-relative">
-                                {/* Curved connector */}
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        left: '-25px',
-                                        top: '0px',
-                                        width: '16px',
-                                        height: '18px',
-                                        borderLeft: '2px solid #ddd',
-                                        borderBottom: '2px solid #ddd',
-                                        borderBottomLeftRadius: '6px'
-                                    }}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: '11px', // Center of 24px avatar (item start at 0, avatar center ~12px => 11px for 2px line)
+                            top: '28px', // Below avatar (24px + 4px padding-top)
+                            bottom: '0', // To bottom of content row
+                            width: '2px',
+                            backgroundColor: '#ddd'
+                        }}
+                    />
+                )}
+                <Image
+                    src={reply.author.avatar || defaultAvatar.src}
+                    className="me-2 avatar-xs rounded-circle flex-shrink-0"
+                    width={24}
+                    height={24}
+                    alt={reply.author.name}
+                    style={{ position: 'relative', zIndex: 1 }}
+                />
+                <div className="w-100">
+                    {/* Reply bubble */}
+                    <div className="bg-light rounded-3 px-3 py-2" style={{ display: 'inline-block', maxWidth: '100%' }}>
+                        <Link href="/users/profile" className="link-reset fw-semibold fs-13">
+                            {reply.author.name}
+                        </Link>
+                        <p className="mb-0 mt-1 fs-13" style={{ whiteSpace: 'pre-wrap' }}>{reply.content}</p>
+                    </div>
+
+                    {/* Action row */}
+                    <div className="d-flex align-items-center gap-3 mt-1 ps-2">
+                        <small className="text-muted fs-12">{formatTime(reply.createdAt)}</small>
+                        <span className="text-muted fs-12 fw-medium" style={{ cursor: 'pointer' }}>Thích</span>
+                        <span
+                            className="text-muted fs-12 fw-medium"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setShowReplyForm(!showReplyForm)}
+                        >
+                            Trả lời
+                        </span>
+                    </div>
+
+                    {/* Reply form */}
+                    {showReplyForm && (
+                        <form onSubmit={handleReplySubmit} className="d-flex align-items-center mt-2">
+                            <Image
+                                src={defaultAvatar}
+                                className="me-2 avatar-xs rounded-circle flex-shrink-0"
+                                width={20}
+                                height={20}
+                                alt="user"
+                            />
+                            <div className="w-100 position-relative">
+                                <input
+                                    type="text"
+                                    className="form-control rounded-pill pe-5"
+                                    placeholder={`Trả lời ${reply.author.name}...`}
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    style={{ paddingRight: '120px' }}
+                                    autoFocus
+                                    disabled={isSubmitting}
                                 />
+                                <div className="position-absolute top-50 end-0 translate-middle-y me-3 d-flex gap-2">
+                                    {!isSubmitting && (
+                                        <>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbCamera size={20} /></span>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbMoodSmile size={20} /></span>
+                                        </>
+                                    )}
+                                    {isSubmitting ? (
+                                        <Spinner animation="border" size="sm" variant="primary" />
+                                    ) : (
+                                        <button type="submit" className="btn btn-link p-0 border-0 bg-transparent" style={{ color: '#65676b' }} disabled={isSubmitting}>
+                                            <TbSend size={20} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </form>
+                    )}
+                </div>
+            </div>
+
+            {/* Nested replies (level 3+) */}
+            {reply.replies && reply.replies.length > 0 && (
+                <div style={{ marginLeft: '36px' }}>
+                    {reply.replies.map((nestedReply, index) => {
+                        const isLast = index === reply.replies!.length - 1
+                        return (
+                            <div key={nestedReply.id} className="position-relative">
+                                {/* Tree Lines for Level 3 - use -25px offset to align with parent's Bridge Line at 11px (36-25=11) */}
+                                <TreeConnector isLast={isLast} isFirst={index === 0} leftOffset="-25px" />
                                 <ReplyItem
                                     reply={nestedReply}
                                     parentCommentId={parentCommentId}
@@ -164,10 +234,10 @@ const ReplyItem = ({ reply, parentCommentId, postId, onComment, formatTime, pare
                                     parentAuthorName={reply.author.name}
                                 />
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                        )
+                    })}
+                </div>
+            )}
         </div>
     )
 }
@@ -176,41 +246,48 @@ const ReplyItem = ({ reply, parentCommentId, postId, onComment, formatTime, pare
 type CommentItemProps = {
     comment: import('./FeedsNew').CommentType
     postId: string
-    onComment: (postId: string, content: string, parentId?: string) => void
+    onComment: (postId: string, content: string, parentId?: string) => Promise<void> | void
     formatTime: (dateString: string) => string
 }
 
 const CommentItem = ({ comment, postId, onComment, formatTime }: CommentItemProps) => {
     const [showReplyForm, setShowReplyForm] = useState(false)
     const [replyText, setReplyText] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const handleReplySubmit = (e: React.FormEvent) => {
+    const handleReplySubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!replyText.trim()) return
+        if (!replyText.trim() || isSubmitting) return
 
-        onComment(postId, replyText, comment.id)
-        setReplyText('')
-        setShowReplyForm(false)
+        setIsSubmitting(true)
+        try {
+            await onComment(postId, replyText, comment.id)
+            setReplyText('')
+            setShowReplyForm(false)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
         <div className="mb-3 position-relative">
-            {/* Single continuous vertical line from avatar through all replies */}
-            {comment.replies && comment.replies.length > 0 && (
-                <div
-                    className="position-absolute"
-                    style={{
-                        left: '15px',
-                        top: '36px',
-                        bottom: '100px',
-                        width: '2px',
-                        backgroundColor: '#ddd'
-                    }}
-                />
-            )}
-
             {/* Main comment row */}
-            <div className="d-flex align-items-start">
+            <div className="d-flex align-items-start position-relative">
+                {/* Bridge Line - connects Avatar to bottom of content area (start of replies) */}
+                {comment.replies && comment.replies.length > 0 && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: '15px', // Center of 32px avatar
+                            top: '36px', // Below avatar
+                            bottom: '0', // To bottom of content row
+                            width: '2px',
+                            backgroundColor: '#ddd'
+                        }}
+                    />
+                )}
                 <Image
                     className="avatar-sm rounded-circle flex-shrink-0"
                     src={comment.author.avatar || defaultAvatar.src}
@@ -228,7 +305,7 @@ const CommentItem = ({ comment, postId, onComment, formatTime }: CommentItemProp
                         <p className="mb-0 mt-1" style={{ whiteSpace: 'pre-wrap' }}>{comment.content}</p>
                     </div>
 
-                    {/* Action row: time, Like, Reply, Share */}
+                    {/* Action row */}
                     <div className="d-flex align-items-center gap-3 mt-1 ps-2">
                         <small className="text-muted">{formatTime(comment.createdAt)}</small>
                         <span className="text-muted fs-13 fw-medium" style={{ cursor: 'pointer' }}>Thích</span>
@@ -239,10 +316,8 @@ const CommentItem = ({ comment, postId, onComment, formatTime }: CommentItemProp
                         >
                             Trả lời
                         </span>
-                        <span className="text-muted fs-13 fw-medium" style={{ cursor: 'pointer' }}>Chia sẻ</span>
                     </div>
 
-                    {/* Reply form */}
                     {showReplyForm && (
                         <form onSubmit={handleReplySubmit} className="d-flex align-items-center mt-2">
                             <Image
@@ -252,41 +327,47 @@ const CommentItem = ({ comment, postId, onComment, formatTime }: CommentItemProp
                                 height={24}
                                 alt="user"
                             />
-                            <div className="w-100">
+                            <div className="w-100 position-relative">
                                 <input
                                     type="text"
-                                    className="form-control form-control-sm rounded-pill"
+                                    className="form-control rounded-pill pe-5"
                                     placeholder={`Trả lời ${comment.author.name}...`}
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
+                                    style={{ paddingRight: '120px' }}
                                     autoFocus
+                                    disabled={isSubmitting}
                                 />
+                                <div className="position-absolute top-50 end-0 translate-middle-y me-3 d-flex gap-2">
+                                    {!isSubmitting && (
+                                        <>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbCamera size={20} /></span>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbMoodSmile size={20} /></span>
+                                        </>
+                                    )}
+                                    {isSubmitting ? (
+                                        <Spinner animation="border" size="sm" variant="primary" />
+                                    ) : (
+                                        <button type="submit" className="btn btn-link p-0 border-0 bg-transparent" style={{ color: '#65676b' }} disabled={isSubmitting}>
+                                            <TbSend size={20} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </form>
                     )}
                 </div>
             </div>
 
-            {/* Display replies */}
+            {/* Display replies (Level 2) */}
             {comment.replies && comment.replies.length > 0 && (
                 <div style={{ marginLeft: '36px', marginTop: '4px' }}>
                     {comment.replies.map((reply, index) => {
                         const isLast = index === comment.replies!.length - 1
                         return (
                             <div key={reply.id} className="position-relative">
-                                {/* Curved connector from vertical line to reply avatar */}
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        left: '-21px',
-                                        top: '0',
-                                        width: '16px',
-                                        height: '18px',
-                                        borderLeft: '2px solid #ddd',
-                                        borderBottom: '2px solid #ddd',
-                                        borderBottomLeftRadius: '8px'
-                                    }}
-                                />
+                                {/* Tree Lines for Level 2 */}
+                                <TreeConnector isLast={isLast} isFirst={index === 0} />
                                 <ReplyItem
                                     reply={reply}
                                     parentCommentId={comment.id}
@@ -308,16 +389,24 @@ const PostCard = ({ post, currentUserId, onLike, onComment, onDelete }: PostCard
     const [commentText, setCommentText] = useState('')
     const [showCommentForm, setShowCommentForm] = useState(false)
     const [showAllComments, setShowAllComments] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const isLiked = post.likes.some(like => like.userId === currentUserId)
     const isOwner = post.author.id === currentUserId
 
-    const handleCommentSubmit = (e: React.FormEvent) => {
+    const handleCommentSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!commentText.trim()) return
+        if (!commentText.trim() || isSubmitting) return
 
-        onComment(post.id, commentText)
-        setCommentText('')
+        setIsSubmitting(true)
+        try {
+            await onComment(post.id, commentText)
+            setCommentText('')
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -376,80 +465,10 @@ const PostCard = ({ post, currentUserId, onLike, onComment, onDelete }: PostCard
 
                 <p style={{ whiteSpace: 'pre-wrap' }}>{post.content}</p>
 
-                {/* Media Gallery - matching original template layout */}
+                {/* Media Gallery - Facebook style */}
                 {post.media.length > 0 && (
-                    <div className="mb-2">
-                        {post.media.length === 1 && (
-                            <img
-                                src={post.media[0]}
-                                alt=""
-                                className="img-fluid w-100 rounded"
-                                style={{ maxHeight: '400px', objectFit: 'cover' }}
-                            />
-                        )}
-                        {post.media.length === 2 && (
-                            <div className="row g-1">
-                                {post.media.map((url, idx) => (
-                                    <div key={idx} className="col-6">
-                                        <img
-                                            src={url}
-                                            alt=""
-                                            className="img-fluid w-100 rounded"
-                                            style={{ aspectRatio: '4/3', objectFit: 'cover' }}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {post.media.length === 3 && (
-                            <div className="row g-1">
-                                <div className="col-md-6">
-                                    <img
-                                        src={post.media[0]}
-                                        alt=""
-                                        className="img-fluid w-100 h-100 rounded"
-                                        style={{ aspectRatio: '3/4', objectFit: 'cover' }}
-                                    />
-                                </div>
-                                <div className="col-md-6 d-flex flex-column gap-1">
-                                    <img
-                                        src={post.media[1]}
-                                        alt=""
-                                        className="img-fluid w-100 rounded"
-                                        style={{ aspectRatio: '4/3', objectFit: 'cover' }}
-                                    />
-                                    <img
-                                        src={post.media[2]}
-                                        alt=""
-                                        className="img-fluid w-100 rounded"
-                                        style={{ aspectRatio: '4/3', objectFit: 'cover' }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                        {post.media.length >= 4 && (
-                            <div className="row g-1">
-                                {post.media.slice(0, 4).map((url, idx) => (
-                                    <div key={idx} className="col-6">
-                                        <div className="position-relative">
-                                            <img
-                                                src={url}
-                                                alt=""
-                                                className="img-fluid w-100 rounded"
-                                                style={{ aspectRatio: '4/3', objectFit: 'cover' }}
-                                            />
-                                            {idx === 3 && post.media.length > 4 && (
-                                                <div
-                                                    className="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 rounded d-flex align-items-center justify-content-center"
-                                                >
-                                                    <span className="text-white fs-4 fw-bold">+{post.media.length - 4}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div className="mb-2 mx-n3">
+                        <MediaGallery media={post.media} />
                     </div>
                 )}
 
@@ -502,8 +521,8 @@ const PostCard = ({ post, currentUserId, onLike, onComment, onDelete }: PostCard
                             )
                         })()}
 
-                        {/* Add Comment Input - always show in comments section */}
-                        <form onSubmit={handleCommentSubmit} className="d-flex align-items-start mt-3">
+                        {/* Add Comment Input - always show when comments are displayed */}
+                        <form onSubmit={handleCommentSubmit} className="d-flex align-items-center mt-3">
                             <Link className="pe-2" href="">
                                 <Image
                                     src={defaultAvatar}
@@ -513,14 +532,32 @@ const PostCard = ({ post, currentUserId, onLike, onComment, onDelete }: PostCard
                                     width={31}
                                 />
                             </Link>
-                            <div className="w-100">
+                            <div className="w-100 position-relative">
                                 <input
                                     type="text"
-                                    className="form-control form-control-sm"
-                                    placeholder="Add a comment..."
+                                    className="form-control rounded-pill pe-5"
+                                    placeholder="Viết bình luận..."
                                     value={commentText}
                                     onChange={(e) => setCommentText(e.target.value)}
+                                    style={{ paddingRight: '120px' }}
+                                    autoFocus
+                                    disabled={isSubmitting}
                                 />
+                                <div className="position-absolute top-50 end-0 translate-middle-y me-3 d-flex gap-2">
+                                    {!isSubmitting && (
+                                        <>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbCamera size={20} /></span>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbMoodSmile size={20} /></span>
+                                        </>
+                                    )}
+                                    {isSubmitting ? (
+                                        <Spinner animation="border" size="sm" variant="primary" />
+                                    ) : (
+                                        <button type="submit" className="btn btn-link p-0 border-0 bg-transparent" style={{ color: '#65676b' }} disabled={isSubmitting}>
+                                            <TbSend size={20} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -552,7 +589,7 @@ const PostCard = ({ post, currentUserId, onLike, onComment, onDelete }: PostCard
                 {/* Comment form - show when Reply is clicked and no comments yet */}
                 {showCommentForm && post.comments.length === 0 && (
                     <div className="bg-light-subtle mx-n3 p-3 border-top border-dashed">
-                        <form onSubmit={handleCommentSubmit} className="d-flex align-items-start">
+                        <form onSubmit={handleCommentSubmit} className="d-flex align-items-center">
                             <Link className="pe-2" href="">
                                 <Image
                                     src={defaultAvatar}
@@ -562,15 +599,32 @@ const PostCard = ({ post, currentUserId, onLike, onComment, onDelete }: PostCard
                                     width={31}
                                 />
                             </Link>
-                            <div className="w-100">
+                            <div className="w-100 position-relative">
                                 <input
                                     type="text"
-                                    className="form-control form-control-sm"
-                                    placeholder="Add a comment..."
+                                    className="form-control rounded-pill pe-5"
+                                    placeholder="Viết bình luận..."
                                     value={commentText}
                                     onChange={(e) => setCommentText(e.target.value)}
+                                    style={{ paddingRight: '120px' }}
                                     autoFocus
+                                    disabled={isSubmitting}
                                 />
+                                <div className="position-absolute top-50 end-0 translate-middle-y me-3 d-flex gap-2">
+                                    {!isSubmitting && (
+                                        <>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbCamera size={20} /></span>
+                                            <span style={{ cursor: 'pointer', color: '#65676b' }}><TbMoodSmile size={20} /></span>
+                                        </>
+                                    )}
+                                    {isSubmitting ? (
+                                        <Spinner animation="border" size="sm" variant="primary" />
+                                    ) : (
+                                        <button type="submit" className="btn btn-link p-0 border-0 bg-transparent" style={{ color: '#65676b' }} disabled={isSubmitting}>
+                                            <TbSend size={20} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </form>
                     </div>
